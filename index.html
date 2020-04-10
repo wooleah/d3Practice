@@ -17,6 +17,29 @@
     <circle cx="150" cy="150" r="2" fill="black" />
     <line x1="225" y1="200" x2="150" y2="150" stroke="black" stroke-width="1" />
   </svg> -->
+
+  <!-- The core Firebase JS SDK is always required and must be listed first -->
+  <script src="https://www.gstatic.com/firebasejs/7.14.0/firebase-app.js"></script>
+  <script src="https://www.gstatic.com/firebasejs/7.14.0/firebase-firestore.js"></script>
+
+  <!-- TODO: Add SDKs for Firebase products that you want to use
+     https://firebase.google.com/docs/web/setup#available-libraries -->
+
+  <script>
+    // Your web app's Firebase configuration
+    var firebaseConfig = {
+      apiKey: "AIzaSyB-DDAq_SFjBS5QPOxGltHXrkXitcDOI_c",
+      authDomain: "d3-practice-bb729.firebaseapp.com",
+      databaseURL: "https://d3-practice-bb729.firebaseio.com",
+      projectId: "d3-practice-bb729",
+      storageBucket: "d3-practice-bb729.appspot.com",
+      messagingSenderId: "851579669350",
+      appId: "1:851579669350:web:d057884e02dd385d0796a7"
+    };
+    // Initialize Firebase
+    firebase.initializeApp(firebaseConfig);
+    const db = firebase.firestore();
+  </script>
 </body>
 
 <script src="https://d3js.org/d3.v5.js"></script>

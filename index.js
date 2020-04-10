@@ -22,7 +22,10 @@ const xAxisGroup = graph.append('g')
   .attr('transform', `translate(0, ${graphHeight})`)
 const yAxisGroup = graph.append('g')
 
-d3.json('menu.json')
+db.collection('dishes').get()
+  .then(res => {
+    return res.docs.map(doc => doc.data())
+  })
   .then(data => {
     const y = d3.scaleLinear()
       .domain([0, d3.max(data, d => d.orders)])
