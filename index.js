@@ -22,56 +22,112 @@ const xAxisGroup = graph.append('g')
   .attr('transform', `translate(0, ${graphHeight})`)
 const yAxisGroup = graph.append('g')
 
-db.collection('dishes').get()
-  .then(res => {
-    return res.docs.map(doc => doc.data())
+
+// scales
+const y = d3.scaleLinear()
+  .range([graphHeight, 0]);
+
+const x = d3.scaleBand()
+  .range([0, 500])
+  .paddingInner(0.2)
+  .paddingOuter(0.2)
+
+// create the axes
+const xAxis = d3.axisBottom(x)
+const yAxis = d3.axisLeft(y)
+  .ticks(3)
+  .tickFormat(d => `${d} orders`)
+
+// Update x axis text
+xAxisGroup.selectAll('text')
+  .attr('transform', 'rotate(-40)')
+  .attr('text-anchor', 'end')
+  .attr('fill', 'orange')
+
+
+const update = (data) => {
+  // Updating the scale domains
+  y.domain([0, d3.max(data, d => d.orders)]);
+  x.domain(data.map(item => item.name));
+
+  // join the data to rects
+  const rects = graph.selectAll('rect')
+    .data(data);
+
+  // remove exit selection 
+  rects.exit().remove();
+
+  // change the shapes of the already existing rects
+  rects.attr('width', x.bandwidth)
+    .attr('fill', 'orange')
+    .attr('x', d => x(d.name))
+    .transition().duration(500)
+    .attr('height', d => graphHeight - y(d.orders))
+    .attr('y', d => y(d.orders))
+
+  // append the enter selection to the dom
+  rects.enter()
+    .append('rect')
+    .attr('width', x.bandwidth) // each bar's width should be 50
+    .attr('height', 0) // height initially zero
+    .attr('fill', 'orange')
+    // starting condition(transition)
+    .attr('x', d => x(d.name)) // and each bar start from i*70 on x axis
+    .attr('y', graphHeight)
+    // chain transition
+    .transition().duration(500)
+    // end condition(transition)
+    .attr('y', d => y(d.orders))
+    .attr('height', d => graphHeight - y(d.orders))
+
+  // call axes
+  xAxisGroup.call(xAxis);
+  yAxisGroup.call(yAxis);
+}
+
+// db.collection('dishes').get()
+//   .then(res => {
+//     return res.docs.map(doc => doc.data())
+//   })
+//   .then(data => {
+//     update(data);
+
+//     d3.interval(() => {
+//       data.pop();
+//       update(data);
+//     }, 3000)
+//   })  
+
+let data = []
+
+db.collection('dishes').onSnapshot(res => {
+  res.docChanges().forEach(change => {
+    const doc = { ...change.doc.data(), id: change.doc.id }
+
+    switch (change.type) {
+      case 'added':
+        data.push(doc);
+        break;
+      case 'removed': {
+        data = data.filter(item => item.id !== doc.id)
+        break;
+      }
+      case 'modified': {
+        const index = data.findIndex(item => item.id === doc.id);
+        data[index] = doc;
+        break;
+      }
+      default:
+        break;
+    }
   })
-  .then(data => {
-    const y = d3.scaleLinear()
-      .domain([0, d3.max(data, d => d.orders)])
-      .range([graphHeight, 0]);
+  update(data)
+})
 
-    // const min = d3.min(data, d => d.orders);
-    // const max = d3.max(data, d => d.orders);
-    // const extend = d3.extent(data, d => d.orders);
-    // console.log(extend)
+// Starting condition
+// Y = graphHeight
+// Height = 0;
 
-    const x = d3.scaleBand()
-      .domain(data.map(item => item.name))
-      .range([0, graphHeight])
-      .paddingInner(0.2)
-      .paddingOuter(0.2)
-
-    // join the data to rects
-    const rects = graph.selectAll('rect')
-      .data(data);
-
-    rects.attr('width', x.bandwidth)
-      .attr('height', d => graphHeight - y(d.orders))
-      .attr('fill', 'orange')
-      .attr('x', d => x(d.name))
-      .attr('y', d => y(d.orders))
-
-    // append the enter selection to the dom
-    rects.enter()
-      .append('rect')
-      .attr('width', x.bandwidth) // each bar's width should be 50
-      .attr('height', d => graphHeight - y(d.orders))
-      .attr('fill', 'orange')
-      .attr('x', d => x(d.name)) // and each bar start from i*70 on x axis
-      .attr('y', d => y(d.orders))
-
-    // create and call the axes
-    const xAxis = d3.axisBottom(x)
-    const yAxis = d3.axisLeft(y)
-      .ticks(3)
-      .tickFormat(d => `${d} orders`)
-
-    xAxisGroup.call(xAxis);
-    yAxisGroup.call(yAxis);
-
-    xAxisGroup.selectAll('text')
-      .attr('transform', 'rotate(-40)')
-      .attr('text-anchor', 'end')
-      .attr('fill', 'orange')
-  })
+// Ending condition
+// Y = y(d.orders)
+// Height = graphHeight - y(d.orders)
